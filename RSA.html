@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        .RSA{
+            border-bottom:1px solid #000;
+            font-size:20px;
+            font-weight:bolder;
+            padding:10px;
+        }
+        .content{
+            padding: 5px;
+        }
+        #button2{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="RSA">
+        经典的RSA加密解密算法
+    </div>
+    <div class="content">
+        明文:<input type="text" id="text1"><span id="check1"></span><br>
+        接收方选择的p值<input type="text" id="text2"><span id="check2"></span><br>
+        接收方选择的q值:<input type="text" id="text3"><span id="check3"></span><br>
+        <div>
+            <span id="check6"></span>
+        </div>
+        <div>
+            <button id="button1">加密</button>
+        </div>
+        <div>
+            <span id="check4"></span>
+        </div>
+        <div>
+            <button id="button2">解密</button>
+        </div>
+        <div>
+            <span id="check5"></span>
+        </div>
+    </div>
+    <script>
+        var alphabetForm = {
+            a:'00',b:'01',c:'02',d:'03',e:'04',f:'05',g:'06',h:'07',i:'08',j:'09',k:'10',l:'11',
+            m:'12',n:'13',o:'14',p:'15',q:'16',r:'17',s:'18',t:'19',u:'20',v:'21',w:'22',x:'23',
+            y:'24',z:'25'
+        }
+        var alphabetFormR = {
+            '00':'a','01':'b','02':'c','03':'d','04':'e','05':'f','06':'g','07':'h','08':'i','09':'j','10':'k','11':'l',
+            '12':'m','13':'n','14':'o','15':'p','16':'q','17':'r','18':'s','19':'t','20':'u','21':'v','22':'w','23':"x",
+            '24':'y','25':'z'
+        }
+        //判定一个数是素数的函数
+        function primality(n,k){
+            var a = Math.floor(Math.random() * n);
+            var d = 1;
+            var loop = (n-1).toString(2);
+            for(var i = 0; i < loop.length; i++){
+               x = d;
+               d = (d * d) % n;
+               if(d == 1 && x != 1 && x != n-1){
+                   return true;
+               }
+               if(loop[i] == 1){
+                   d = (d * a) % n;
+               }
+            }
+            if( d != 1){
+                return true;
+            }
+            return false;
+        }
+
+        //欧几里得扩展算法求解乘法逆元函数
+        function privateKey(a, b)  
+        {
+            if(b == 0){
+                x = 1;
+                y = 0;
+            } else{
+                privateKey(b, a % b);
+                var n;
+                n = parseInt(a / b);
+                var temp = x;
+                x = y;
+                if (temp - n * y < 0) {
+                    y = Math.ceil(temp - n * y);
+                } else {
+                    y = Math.floor(temp - n * y);
+                }
+                
+            }
+            return x;
+        }
+
+
+        // 加密函数
+        function encrypt(code,e,n){
+            var numCode = +(alphabetForm[code[0]] + alphabetForm[code[1]]);
+            return String(quickMod(numCode,e,n));
+        }
+
+
+        // 快速取模指数算法函数
+        function quickMod(num,e,n){
+            var loop = e.toString(2);
+            var c = 0;
+            var d = 1;
+            for(var i = 0; i < loop.length; i++){
+                c = 2 * c;
+                d = (d * d) % n;
+                if(loop[i] == 1){
+                    c = c + 1;
+                    d = (d * num) % n;
+                }
+            }
+            return d;
+        }
+
+        //求最大公约数算方法
+        function gcd(a,b){
+            return b === 0 ? a : gcd(b,a%b);
+        }
+
+
+
+        var m;
+        var p;
+        var q;
+        var e = 13;
+        var n, d;
+        var sum;
+        var C = '';
+        var mArr = new Array();
+        var lock1 = true;
+        var lock2 = true;
+
+
+        text1.onchange = function(){
+            check1.innerHTML = "";
+            check1.style.color = 'red';
+            m = text1.value.toLowerCase();
+            if(/(*\d)/.test(m)){
+                check1.innerHTML = "不允许含有数字，请重新输入";
+            }else if(/[^\w\u4e00-\u9fa5]+/.test(m)){
+                check1.innerHTML = "不允许含有非法字符，请重新输入";
+            }else{
+                check1.innerHTML = "输入格式正确";
+                check1.style.color = 'green';
+            }
+        }
+        text2.onchange = function(){
+            check2.innerHTML = "";
+            check2.style.color = 'red';
+            p = text2.value;
+            if(primality(p,10)){
+                check2.innerHTML = "输入的数不为素数，请重新输入";
+            }else{
+                check2.innerHTML = "输入的数正确，为素数";
+                check2.style.color = 'green';
+            }
+        }
+        text3.onchange = function(){
+            check3.innerHTML = "";
+            check3.style.color = 'red';
+            q = text3.value;
+            if(q == p){
+                check3.innerHTML = "输入的数与p相同，请重新输入";
+            }else{
+                if(primality(q,10)){
+                    check3.innerHTML = "输入的数不为素数，请重新输入";
+                }else{
+                    check3.innerHTML = "输入的数正确，为素数";
+                    check3.style.color = 'green';
+                }
+            }
+        }
+
+
+        button1.onclick = function(){
+            if(lock1){
+                n = p * q;
+                sum = (p-1)*(q-1);
+                if((gcd(sum,e)) == 1){
+                    check6.innerHTML = "后台的e值正确";
+                }else{
+                    check6.innerHTML = "后台的e值不正确,请重新设置";
+                }
+                d = privateKey(e,sum);
+                if(d < 0){
+                    d = d + sum;
+                }
+                for(var i = 0; i < m.length/2; i++){
+                    mArr[i] = m.substr(i*2,2);
+                    var cipher = encrypt(mArr[i], e, n);
+                    C = C + cipher + ' ';
+                }
+                C = C.trim();
+                check4.innerHTML = "加密后的密文为:" + C;
+                button2.style.display = 'block';
+                lock1 = false;
+            }
+        }
+        button2.onclick = function(){
+            if(lock2){
+                var M = '';
+                for(var i = 0; i < C.split(' ').length; i++){
+                    var decryptCode = String(quickMod(C.split(' ')[i],d,n));
+                    if(decryptCode.length == 4){
+                        var front = decryptCode.substr(0,2);
+                        var last = decryptCode.substr(2,2);
+                        M = M + alphabetFormR[front] + alphabetFormR[last];
+                    }
+                    if(decryptCode.length == 3){
+                        var front = "0" + decryptCode.substr(0,1);
+                        var last = decryptCode.substr(1,2);
+                        M = M + alphabetFormR[front] + alphabetFormR[last];
+                    }
+                    if(decryptCode.length == 2){
+                        var last = decryptCode.substr(0,2);
+                        M = M + alphabetFormR["00"] + alphabetFormR[last];
+                    }
+                }
+                check5.innerHTML = "解密后的明文为:" + M;
+                lock2 = false;
+            }
+            
+        }
+       
+    </script>
+</body>
+</html>
